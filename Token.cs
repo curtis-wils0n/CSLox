@@ -2,10 +2,10 @@ namespace CSLox;
 
 public class Token(TokenType type, string lexeme, object? literal, int line)
 {
-	private readonly int _line = line;
+	public TokenType Type { get; } = type;
+	public string Lexeme { get; } = lexeme;
+	public object? Literal { get; } = literal;
+	public int Line { get; } = line;
 
-	public override string ToString()
-	{
-		return type + " " + lexeme + " " + literal;
-	}
+	public override string ToString() => $"{Type} {Lexeme} {Literal ?? "null"}";
 }
