@@ -19,5 +19,5 @@ public enum TokenType
 	And, Class, Else, False, Fun, For, If, Nil, Or,
 	Print, Return, Super, This, True, Var, While,
 	
-	EOF
+	EndOfFile
 }
