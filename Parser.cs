@@ -100,12 +100,12 @@ public class Parser
 
 	private bool Match(params TokenType[] types)
 	{
-		if (!types.Any(type => Check(type))) return false;
+		if (!types.Any(Check)) return false;
 		Advance();
 		return true;
 	}
 
-	private bool Match(TokenType type)
+	private bool Check(TokenType type)
 	{
 		if (IsAtEnd()) return false;
 		return Peek().Type == type;
