@@ -1,0 +1,134 @@
+namespace CSLox;
+
+public class Parser
+{
+	private readonly List<Token> _tokens;
+	private int _current = 0;
+
+	Parser(List<Token> tokens)
+	{
+		this._tokens = tokens;
+	}
+
+	private Expr Expression()
+	{
+		return Equality();
+	}
+
+	private Expr Equality()
+	{
+		Expr expr = Comparison();
+
+		while (Match(TokenType.BangEqual, TokenType.EqualEqual))
+		{
+			var op = Previous();
+			Expr right = Comparison();
+			expr = new Expr.Binary(expr, op, right);
+		}
+
+		return expr;
+	}
+
+	private Expr Comparison()
+	{
+		var expr = Term();
+
+		while (Match(TokenType.Greater, TokenType.GreaterEqual, TokenType.Less, TokenType.LessEqual))
+		{
+			var op = Previous();
+			var right = Term();
+			expr = new Expr.Binary(expr, op, right);
+		}
+
+		return expr;
+	}
+
+	private Expr Term()
+	{
+		var expr = Factor();
+
+		while (Match(TokenType.Minus, TokenType.Plus))
+		{
+			var op = Previous();
+			var right = Factor();
+			expr = new Expr.Binary(expr, op, right);
+		}
+
+		return expr;
+	}
+
+	private Expr Factor()
+	{
+		var expr = Unary();
+
+		while (Match(TokenType.Slash, TokenType.Star))
+		{
+			var op = Previous();
+			var right = Unary();
+			expr = new Expr.Binary(expr, op, right);
+		}
+
+		return expr;
+	}
+
+	private Expr Unary()
+	{
+		if (!Match(TokenType.Bang, TokenType.Minus)) return Primary();
+		var op = Previous();
+		var right = Unary();
+		return new Expr.Unary(op, right);
+	}
+
+	private Expr Primary()
+	{
+		if (Match(TokenType.False)) return new Expr.Literal(false);
+		if (Match(TokenType.True)) return new Expr.Literal(true);
+		if (Match(TokenType.Nil)) return new Expr.Literal(null);
+
+		if (Match(TokenType.Number, TokenType.String))
+		{
+			return new Expr.Literal(Previous().Literal);
+		}
+
+		if (Match(TokenType.LeftParen))
+		{
+			var expr = Expression();
+			Consume(TokenType.RightParen, "Expect ')' after expression.");
+			return new Expr.Grouping(expr);
+		}
+	}
+
+	private bool Match(params TokenType[] types)
+	{
+		if (!types.Any(type => Check(type))) return false;
+		Advance();
+		return true;
+	}
+
+	private bool Match(TokenType type)
+	{
+		if (IsAtEnd()) return false;
+		return Peek().Type == type;
+	}
+
+	private Token Advance()
+	{
+		if (!IsAtEnd()) _current++;
+		return Previous();
+	}
+
+	private bool IsAtEnd()
+	{
+		return Peek().Type == TokenType.EndOfFile;
+	}
+
+	private Token Peek()
+	{
+		return _tokens[_current];
+	}
+
+	private Token Previous()
+	{
+		return _tokens[_current - 1];
+	}
+}
