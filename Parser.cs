@@ -1,14 +1,10 @@
 namespace CSLox;
 
-public class Parser
+public class Parser(List<Token> tokens)
 {
-	private readonly List<Token> _tokens;
-	private int _current = 0;
+	private class ParseError : Exception;
 
-	Parser(List<Token> tokens)
-	{
-		this._tokens = tokens;
-	}
+	private int _current = 0;
 
 	private Expr Expression()
 	{
@@ -90,12 +86,12 @@ public class Parser
 			return new Expr.Literal(Previous().Literal);
 		}
 
-		if (Match(TokenType.LeftParen))
-		{
-			var expr = Expression();
-			Consume(TokenType.RightParen, "Expect ')' after expression.");
-			return new Expr.Grouping(expr);
-		}
+		if (!Match(TokenType.LeftParen)) throw Error(Peek(), "Expected expression.");
+		
+		var expr = Expression();
+		Consume(TokenType.RightParen, "Expect ')' after expression.");
+		return new Expr.Grouping(expr);
+
 	}
 
 	private bool Match(params TokenType[] types)
@@ -103,6 +99,11 @@ public class Parser
 		if (!types.Any(Check)) return false;
 		Advance();
 		return true;
+	}
+
+	private Token Consume(TokenType type, string message)
+	{
+		return Check(type) ? Advance() : throw Error(Peek(), message);
 	}
 
 	private bool Check(TokenType type)
@@ -124,11 +125,54 @@ public class Parser
 
 	private Token Peek()
 	{
-		return _tokens[_current];
+		return tokens[_current];
 	}
 
 	private Token Previous()
 	{
-		return _tokens[_current - 1];
+		return tokens[_current - 1];
+	}
+
+	private static ParseError Error(Token token, string message)
+	{
+		Lox.Error(token, message);
+		return new ParseError();
+	}
+
+	private void Synchronize()
+	{
+		Advance();
+
+		while (!IsAtEnd())
+		{
+			if (Previous().Type == TokenType.Semicolon) return;
+
+			switch (Peek().Type)
+			{
+				case TokenType.Class:
+				case TokenType.Fun:
+				case TokenType.Var:
+				case TokenType.For:
+				case TokenType.If:
+				case TokenType.While:
+				case TokenType.Print:
+				case TokenType.Return:
+					return;
+			}
+
+			Advance();
+		}
+	}
+
+	public Expr Parse()
+	{
+		try
+		{
+			return Expression();
+		}
+		catch (ParseError error)
+		{
+			return null;
+		}
 	}
 }
