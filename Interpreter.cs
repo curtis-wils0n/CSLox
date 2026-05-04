@@ -16,11 +16,11 @@ public class Interpreter : Expr.IVisitor<object?>
 	{
 		var right = Evaluate(expr.Right);
 
-		return expr.Op.Type switch
+		return expr.Operator.Type switch
 		{
 			TokenType.Bang => !IsTruthy(right),
-			TokenType.Minus => -CheckNumberOperand(expr.Op, right),
-			_ => throw new InvalidOperationException($"Unreachable unary operator: {expr.Op.Type}")
+			TokenType.Minus => -CheckNumberOperand(expr.Operator, right),
+			_ => throw new InvalidOperationException($"Unreachable unary operator: {expr.Operator.Type}")
 		};
 	}
 
@@ -77,24 +77,24 @@ public class Interpreter : Expr.IVisitor<object?>
 		var left = Evaluate(expr.Left);
 		var right = Evaluate(expr.Right);
 
-		return expr.Op.Type switch
+		return expr.Operator.Type switch
 		{
-			TokenType.Greater => CheckNumberOperands(expr.Op, left, right, out var rightValue) > rightValue,
-			TokenType.GreaterEqual => CheckNumberOperands(expr.Op, left, right, out var rightValue) >= rightValue,
-			TokenType.Less => CheckNumberOperands(expr.Op, left, right, out var rightValue) < rightValue,
-			TokenType.LessEqual => CheckNumberOperands(expr.Op, left, right, out var rightValue) <= rightValue,
+			TokenType.Greater => CheckNumberOperands(expr.Operator, left, right, out var rightValue) > rightValue,
+			TokenType.GreaterEqual => CheckNumberOperands(expr.Operator, left, right, out var rightValue) >= rightValue,
+			TokenType.Less => CheckNumberOperands(expr.Operator, left, right, out var rightValue) < rightValue,
+			TokenType.LessEqual => CheckNumberOperands(expr.Operator, left, right, out var rightValue) <= rightValue,
 			TokenType.BangEqual => !Equals(left, right),
 			TokenType.EqualEqual => Equals(left, right),
-			TokenType.Minus => CheckNumberOperands(expr.Op, left, right, out var rightValue) - rightValue,
-			TokenType.Slash => CheckNumberOperands(expr.Op, left, right, out var rightValue) / rightValue,
-			TokenType.Star => CheckNumberOperands(expr.Op, left, right, out var rightValue) * rightValue,
+			TokenType.Minus => CheckNumberOperands(expr.Operator, left, right, out var rightValue) - rightValue,
+			TokenType.Slash => CheckNumberOperands(expr.Operator, left, right, out var rightValue) / rightValue,
+			TokenType.Star => CheckNumberOperands(expr.Operator, left, right, out var rightValue) * rightValue,
 			TokenType.Plus => (left, right) switch
 			{
 				(double l, double r) => l + r,
 				(string ls, string rs) => ls + rs,
-				_ => throw new RuntimeError(expr.Op, "Operands must be two numbers or two strings.")
+				_ => throw new RuntimeError(expr.Operator, "Operands must be two numbers or two strings.")
 			},
-			_ => throw new InvalidOperationException($"Unreachable binary operator: {expr.Op.Type}")
+			_ => throw new InvalidOperationException($"Unreachable binary operator: {expr.Operator.Type}")
 		};
 	}
 

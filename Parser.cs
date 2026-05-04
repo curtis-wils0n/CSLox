@@ -4,7 +4,7 @@ public class Parser(List<Token> tokens)
 {
 	private class ParseError : Exception;
 
-	private int _current = 0;
+	private int _current;
 
 	private Expr Expression()
 	{
@@ -13,12 +13,12 @@ public class Parser(List<Token> tokens)
 
 	private Expr Equality()
 	{
-		Expr expr = Comparison();
+		var expr = Comparison();
 
 		while (Match(TokenType.BangEqual, TokenType.EqualEqual))
 		{
 			var op = Previous();
-			Expr right = Comparison();
+			var right = Comparison();
 			expr = new Expr.Binary(expr, op, right);
 		}
 
