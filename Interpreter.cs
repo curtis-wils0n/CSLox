@@ -9,6 +9,22 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 		return expr.Value;
 	}
 
+	public object? VisitLogicalExpr(Expr.Logical expr)
+	{
+		var left = Evaluate(expr.Left);
+
+		if (expr.Operator.Type == TokenType.Or)
+		{
+			if (IsTruthy(left)) return left;
+		}
+		else
+		{
+			if (!IsTruthy(left)) return left;
+		}
+
+		return Evaluate(expr.Right);
+	}
+
 	public object? VisitGroupingExpr(Expr.Grouping expr)
 	{
 		return Evaluate(expr.Expression);
@@ -112,6 +128,18 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 		Evaluate(stmt.InnerExpression);
 	}
 
+	public void VisitIfStmt(Stmt.If stmt)
+	{
+		if (IsTruthy(Evaluate(stmt.Condition)))
+		{
+			Execute(stmt.ThenBranch);
+		}
+		else if (stmt.ElseBranch != null)
+		{
+			Execute(stmt.ElseBranch);
+		}
+	}
+
 	public void VisitPrintStmt(Stmt.Print stmt)
 	{
 		var value = Evaluate(stmt.InnerExpression);
@@ -123,6 +151,14 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 		var value = Evaluate(stmt.Initializer);
 
 		_environment.Define(stmt.Name.Lexeme, value);
+	}
+
+	public void VisitWhileStmt(Stmt.While stmt)
+	{
+		while (IsTruthy(Evaluate(stmt.Condition)))
+		{
+			Execute(stmt.Body);
+		}
 	}
 
 	public object? VisitAssignExpr(Expr.Assign expr)

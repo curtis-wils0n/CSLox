@@ -27,6 +27,11 @@ public class AstPrinter : Expr.IVisitor<string>
 	{
 		return expr.Value?.ToString() ?? "nil";
 	}
+	
+	public string VisitLogicalExpr(Expr.Logical expr)
+	{
+		throw new NotImplementedException();
+	}
 
 	public string VisitUnaryExpr(Expr.Unary expr)
 	{

@@ -8,6 +8,7 @@ public abstract class Expr
 		TResult VisitBinaryExpr(Binary expr);
 		TResult VisitGroupingExpr(Grouping expr);
 		TResult VisitLiteralExpr(Literal expr);
+		TResult VisitLogicalExpr(Logical expr);
 		TResult VisitUnaryExpr(Unary expr);
 		TResult VisitVariableExpr(Variable expr);
 	}
@@ -43,6 +44,15 @@ public abstract class Expr
 		public object? Value { get; } = value;
 
 		public override TResult Accept<TResult>(IVisitor<TResult> visitor) => visitor.VisitLiteralExpr(this);
+	}
+
+	public class Logical(Expr left, Token op, Expr right) : Expr
+	{
+		public Expr Left { get; } = left;
+		public Token Operator { get; } = op;
+		public Expr Right { get; } = right;
+
+		public override TResult Accept<TResult>(IVisitor<TResult> visitor) => visitor.VisitLogicalExpr(this);
 	}
 
 	public class Unary(Token op, Expr right) : Expr
