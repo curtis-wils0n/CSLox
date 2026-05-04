@@ -11,6 +11,25 @@ public class Parser(List<Token> tokens)
 		return Equality();
 	}
 
+	private Stmt Statement()
+	{
+		return Match(TokenType.Print) ? PrintStatement() : ExpressionStatement();
+	}
+
+	private Stmt.Print PrintStatement()
+	{
+		var value = Expression();
+		Consume(TokenType.Semicolon, "Expect ';' after value.");
+		return new Stmt.Print(value);
+	}
+
+	private Stmt.Expression ExpressionStatement()
+	{
+		var expr = Expression();
+		Consume(TokenType.Semicolon, "Expect ';' after expression.");
+		return new Stmt.Expression(expr);
+	}
+
 	private Expr Equality()
 	{
 		var expr = Comparison();
@@ -164,15 +183,14 @@ public class Parser(List<Token> tokens)
 		}
 	}
 
-	public Expr? Parse()
+	public List<Stmt> Parse()
 	{
-		try
+		var statements = new List<Stmt>();
+		while (!IsAtEnd())
 		{
-			return Expression();
+			statements.Add(Statement());
 		}
-		catch
-		{
-			return null;
-		}
+
+		return statements;
 	}
 }

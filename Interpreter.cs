@@ -1,6 +1,6 @@
 namespace CSLox;
 
-public class Interpreter : Expr.IVisitor<object?>
+public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 {
 	public object? VisitLiteralExpr(Expr.Literal expr)
 	{
@@ -24,12 +24,14 @@ public class Interpreter : Expr.IVisitor<object?>
 		};
 	}
 
-	public void Interpret(Expr expr)
+	public void Interpret(List<Stmt> statements)
 	{
 		try
 		{
-			var value = Evaluate(expr);
-			if (value != null) Console.WriteLine(Stringify(value));
+			foreach (var statement in statements)
+			{
+				Execute(statement);
+			}
 		}
 		catch (RuntimeError err)
 		{
@@ -70,6 +72,22 @@ public class Interpreter : Expr.IVisitor<object?>
 	private object? Evaluate(Expr expr)
 	{
 		return expr.Accept(this);
+	}
+
+	private void Execute(Stmt stmt)
+	{
+		stmt.Accept(this);
+	}
+
+	public void VisitExpressionStmt(Stmt.Expression stmt)
+	{
+		Evaluate(stmt.InnerExpression);
+	}
+
+	public void VisitPrintStmt(Stmt.Print stmt)
+	{
+		var value = Evaluate(stmt.InnerExpression);
+		if (value != null) Console.WriteLine(Stringify(value));
 	}
 
 	public object? VisitBinaryExpr(Expr.Binary expr)

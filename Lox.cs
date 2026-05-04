@@ -1,6 +1,6 @@
 ﻿namespace CSLox;
 
-public class Lox
+public abstract class Lox
 {
 	private static readonly Interpreter Interpreter = new();
 	private static bool _hadError;
@@ -50,12 +50,12 @@ public class Lox
 		var tokens = scanner.ScanTokens();
 
 		var parser = new Parser(tokens);
-		var expression = parser.Parse();
+		var statements = parser.Parse();
 
 		// Stop if there was a syntax error
 		if (_hadError) return;
 
-		if (expression != null) Interpreter.Interpret(expression);
+		Interpreter.Interpret(statements);
 	}
 
 	public static void Error(int line, string message)
