@@ -87,7 +87,7 @@ public class Parser(List<Token> tokens)
 		}
 
 		if (!Match(TokenType.LeftParen)) throw Error(Peek(), "Expected expression.");
-		
+
 		var expr = Expression();
 		Consume(TokenType.RightParen, "Expect ')' after expression.");
 		return new Expr.Grouping(expr);
@@ -164,13 +164,13 @@ public class Parser(List<Token> tokens)
 		}
 	}
 
-	public Expr Parse()
+	public Expr? Parse()
 	{
 		try
 		{
 			return Expression();
 		}
-		catch (ParseError error)
+		catch
 		{
 			return null;
 		}

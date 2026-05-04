@@ -29,7 +29,7 @@ public class Interpreter : Expr.IVisitor<object?>
 		try
 		{
 			var value = Evaluate(expr);
-			Console.WriteLine(Stringify(value));
+			if (value != null) Console.WriteLine(Stringify(value));
 		}
 		catch (RuntimeError err)
 		{
@@ -47,7 +47,7 @@ public class Interpreter : Expr.IVisitor<object?>
 		};
 	}
 
-	private string? Stringify(object obj)
+	private static string? Stringify(object obj)
 	{
 		switch (obj)
 		{
@@ -56,7 +56,7 @@ public class Interpreter : Expr.IVisitor<object?>
 			case double:
 			{
 				var text = obj.ToString();
-				if (text.EndsWith(".0"))
+				if (text != null && text.EndsWith(".0"))
 				{
 					text = text[..^2];
 				}

@@ -55,7 +55,7 @@ public class Lox
 		// Stop if there was a syntax error
 		if (_hadError) return;
 
-		Interpreter.Interpret(expression);
+		if (expression != null) Interpreter.Interpret(expression);
 	}
 
 	public static void Error(int line, string message)
