@@ -2,7 +2,18 @@ namespace CSLox;
 
 public class Environment
 {
+	private readonly Environment? _enclosing;
 	private readonly Dictionary<string, object?> _values = new();
+
+	public Environment()
+	{
+		_enclosing = null;
+	}
+
+	public Environment(Environment enclosing)
+	{
+		_enclosing = enclosing;
+	}
 
 	public void Define(string name, object? value)
 	{
@@ -11,12 +22,19 @@ public class Environment
 
 	public object? Get(Token name)
 	{
-		return _values.TryGetValue(name.Lexeme, out var value) ? value : throw new RuntimeError(name, "Undefined variable '" + name.Lexeme + "'.");
+		if (_values.TryGetValue(name.Lexeme, out var value))
+		{
+			return value;
+		}
+
+		return _enclosing != null ? _enclosing.Get(name) : throw new RuntimeError(name, "Undefined variable '" + name.Lexeme + "'.");
 	}
 
 	public void Assign(Token name, object? value)
 	{
-		if (!_values.ContainsKey(name.Lexeme)) throw new RuntimeError(name, "Undefined variable '" + name.Lexeme + "'.");
-		_values[name.Lexeme] = value;
+		if (_values.ContainsKey(name.Lexeme)) _values[name.Lexeme] = value;
+		_enclosing?.Assign(name, value);
+		
+		throw new RuntimeError(name, "Undefined variable '" + name.Lexeme + "'.");
 	}
 }

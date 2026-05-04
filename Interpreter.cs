@@ -2,7 +2,7 @@ namespace CSLox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 {
-	private readonly Environment _environment = new();
+	private Environment _environment = new();
 
 	public object? VisitLiteralExpr(Expr.Literal expr)
 	{
@@ -75,14 +75,36 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 		}
 	}
 
-	private object? Evaluate(Expr expr)
+	private object? Evaluate(Expr? expr)
 	{
-		return expr.Accept(this);
+		return expr?.Accept(this);
 	}
 
 	private void Execute(Stmt? stmt)
 	{
 		stmt?.Accept(this);
+	}
+
+	private void ExecuteBlock(List<Stmt?> statements, Environment environment)
+	{
+		var previous = _environment;
+		try
+		{
+			_environment = environment;
+			foreach (var statement in statements)
+			{
+				Execute(statement);
+			}
+		}
+		finally
+		{
+			_environment = previous;
+		}
+	}
+
+	public void VisitBlockStmt(Stmt.Block stmt)
+	{
+		ExecuteBlock(stmt.Statements, new Environment(_environment));
 	}
 
 	public void VisitExpressionStmt(Stmt.Expression stmt)
@@ -95,7 +117,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 		var value = Evaluate(stmt.InnerExpression);
 		if (value != null) Console.WriteLine(Stringify(value));
 	}
-	
+
 	public void VisitVarStmt(Stmt.Var stmt)
 	{
 		var value = Evaluate(stmt.Initializer);

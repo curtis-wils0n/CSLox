@@ -26,7 +26,10 @@ public class Parser(List<Token> tokens)
 
 	private Stmt Statement()
 	{
-		return Match(TokenType.Print) ? PrintStatement() : ExpressionStatement();
+		if (Match(TokenType.Print)) return PrintStatement();
+		if (Match(TokenType.LeftBrace)) return new Stmt.Block(Block());
+		
+		return ExpressionStatement();
 	}
 
 	private Stmt.Print PrintStatement()
@@ -36,7 +39,7 @@ public class Parser(List<Token> tokens)
 		return new Stmt.Print(value);
 	}
 
-	private Stmt VarDeclaration()
+	private Stmt.Var VarDeclaration()
 	{
 		var name = Consume(TokenType.Identifier, "Expect variable name.");
 		Expr? initializer = null;
@@ -55,6 +58,18 @@ public class Parser(List<Token> tokens)
 		var expr = Expression();
 		Consume(TokenType.Semicolon, "Expect ';' after expression.");
 		return new Stmt.Expression(expr);
+	}
+
+	private List<Stmt?> Block()
+	{
+		var statements = new List<Stmt?>();
+		while (!Check(TokenType.RightBrace) && !IsAtEnd())
+		{
+			statements.Add(Declaration());
+		}
+
+		Consume(TokenType.RightBrace, "Expect '}' after block.");
+		return statements;
 	}
 
 	private Expr Assignment()
