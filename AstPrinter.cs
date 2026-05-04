@@ -18,6 +18,14 @@ public class AstPrinter : Expr.IVisitor<string>
 		return Parenthesize(expr.Operator.Lexeme, expr.Left, expr.Right);
 	}
 
+	public string VisitCallExpr(Expr.Call expr)
+	{
+		var args = new Expr[expr.Arguments.Count + 1];
+		args[0] = expr.Callee;
+		expr.Arguments.CopyTo(args, 1);
+		return Parenthesize("call", args);
+	}
+
 	public string VisitGroupingExpr(Expr.Grouping expr)
 	{
 		return Parenthesize("group", expr.Expression);

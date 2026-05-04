@@ -2,7 +2,13 @@ namespace CSLox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 {
-	private Environment _environment = new();
+	public static readonly Environment Globals = new();
+	private Environment _environment = Globals;
+
+	public Interpreter()
+	{
+		Globals.Define("clock", new LoxCallable());
+	}
 
 	public object? VisitLiteralExpr(Expr.Literal expr)
 	{
@@ -101,7 +107,7 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 		stmt?.Accept(this);
 	}
 
-	private void ExecuteBlock(List<Stmt?> statements, Environment environment)
+	public void ExecuteBlock(List<Stmt?> statements, Environment environment)
 	{
 		var previous = _environment;
 		try
@@ -128,6 +134,12 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 		Evaluate(stmt.InnerExpression);
 	}
 
+	public void VisitFunctionStmt(Stmt.Function stmt)
+	{
+		var function = new LoxFunction(stmt, _environment);
+		_environment.Define(stmt.Name.Lexeme, function);
+	}
+
 	public void VisitIfStmt(Stmt.If stmt)
 	{
 		if (IsTruthy(Evaluate(stmt.Condition)))
@@ -144,6 +156,14 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 	{
 		var value = Evaluate(stmt.InnerExpression);
 		if (value != null) Console.WriteLine(Stringify(value));
+	}
+
+	public void VisitReturnStmt(Stmt.Return stmt)
+	{
+		object? value = null;
+		if (stmt.Value != null) value = Evaluate(stmt.Value);
+
+		throw new Return(value);
 	}
 
 	public void VisitVarStmt(Stmt.Var stmt)
@@ -192,6 +212,22 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 			},
 			_ => throw new InvalidOperationException($"Unreachable binary operator: {expr.Operator.Type}")
 		};
+	}
+
+	public object? VisitCallExpr(Expr.Call expr)
+	{
+		var callee = Evaluate(expr.Callee);
+
+		List<object?> arguments = [];
+		arguments.AddRange(expr.Arguments.Select(Evaluate));
+
+		if (callee is not ILoxCallable function)
+		{
+			throw new RuntimeError(expr.Paren, "Can only call functions and classes.");
+		}
+
+		return arguments.Count != function.Arity() ? throw new RuntimeError(expr.Paren, "Expected " + function.Arity() + " arguments but got " + arguments.Count + ".") : function.Call(this, arguments);
+
 	}
 
 	private static double CheckNumberOperand(Token op, object? operand)

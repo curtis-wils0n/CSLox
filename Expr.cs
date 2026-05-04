@@ -6,6 +6,7 @@ public abstract class Expr
 	{
 		TResult VisitAssignExpr(Assign expr);
 		TResult VisitBinaryExpr(Binary expr);
+		TResult VisitCallExpr(Call expr);
 		TResult VisitGroupingExpr(Grouping expr);
 		TResult VisitLiteralExpr(Literal expr);
 		TResult VisitLogicalExpr(Logical expr);
@@ -30,6 +31,15 @@ public abstract class Expr
 		public Expr Right { get; } = right;
 
 		public override TResult Accept<TResult>(IVisitor<TResult> visitor) => visitor.VisitBinaryExpr(this);
+	}
+
+	public class Call(Expr callee, Token paren, List<Expr> arguments) : Expr
+	{
+		public Expr Callee { get; } = callee;
+		public Token Paren { get; } = paren;
+		public List<Expr> Arguments { get; } = arguments;
+
+		public override TResult Accept<TResult>(IVisitor<TResult> visitor) => visitor.VisitCallExpr(this);
 	}
 
 	public class Grouping(Expr expression) : Expr
