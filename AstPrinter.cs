@@ -10,7 +10,7 @@ public class AstPrinter : Expr.IVisitor<string>
 
 	public string VisitAssignExpr(Expr.Assign expr)
 	{
-		throw new NotImplementedException();
+		return Parenthesize("= " + expr.Name.Lexeme, expr.Value);
 	}
 
 	public string VisitBinaryExpr(Expr.Binary expr)
@@ -30,7 +30,7 @@ public class AstPrinter : Expr.IVisitor<string>
 	
 	public string VisitLogicalExpr(Expr.Logical expr)
 	{
-		throw new NotImplementedException();
+		return Parenthesize(expr.Operator.Lexeme, expr.Left, expr.Right);
 	}
 
 	public string VisitUnaryExpr(Expr.Unary expr)
@@ -39,7 +39,7 @@ public class AstPrinter : Expr.IVisitor<string>
 	}
 	public string VisitVariableExpr(Expr.Variable expr)
 	{
-		throw new NotImplementedException();
+		return expr.Name.Lexeme;
 	}
 
 	private string Parenthesize(string name, params Expr[] exprs)
