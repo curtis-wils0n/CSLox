@@ -2,7 +2,9 @@
 
 public class Lox
 {
+	private static readonly Interpreter Interpreter = new();
 	private static bool _hadError;
+	private static bool _hadRuntimeError;
 
 	public static void Main(string[] args)
 	{
@@ -27,6 +29,7 @@ public class Lox
 		Run(text);
 
 		if (_hadError) Environment.Exit(65);
+		if (_hadRuntimeError) Environment.Exit(70);
 	}
 
 	private static void RunPrompt()
@@ -52,7 +55,7 @@ public class Lox
 		// Stop if there was a syntax error
 		if (_hadError) return;
 
-		Console.WriteLine(new AstPrinter().Print(expression));
+		Interpreter.Interpret(expression);
 	}
 
 	public static void Error(int line, string message)
@@ -76,5 +79,11 @@ public class Lox
 		{
 			Report(token.Line, " at '" + token.Lexeme + "'", message);
 		}
+	}
+
+	public static void RuntimeError(RuntimeError error)
+	{
+		Console.Error.WriteLine(error.Message + "\n[line " + error.Token.Line + "]");
+		_hadRuntimeError = true;
 	}
 }

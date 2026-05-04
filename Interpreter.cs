@@ -1,0 +1,112 @@
+namespace CSLox;
+
+public class Interpreter : Expr.IVisitor<object?>
+{
+	public object? VisitLiteralExpr(Expr.Literal expr)
+	{
+		return expr.Value;
+	}
+
+	public object? VisitGroupingExpr(Expr.Grouping expr)
+	{
+		return Evaluate(expr.Expression);
+	}
+
+	public object? VisitUnaryExpr(Expr.Unary expr)
+	{
+		var right = Evaluate(expr.Right);
+
+		return expr.Op.Type switch
+		{
+			TokenType.Bang => !IsTruthy(right),
+			TokenType.Minus => -CheckNumberOperand(expr.Op, right),
+			_ => throw new InvalidOperationException($"Unreachable unary operator: {expr.Op.Type}")
+		};
+	}
+
+	public void Interpret(Expr expr)
+	{
+		try
+		{
+			var value = Evaluate(expr);
+			Console.WriteLine(Stringify(value));
+		}
+		catch (RuntimeError err)
+		{
+			Lox.RuntimeError(err);
+		}
+	}
+
+	private static bool IsTruthy(object? obj)
+	{
+		return obj switch
+		{
+			null => false,
+			bool b => b,
+			_ => true
+		};
+	}
+
+	private string? Stringify(object obj)
+	{
+		switch (obj)
+		{
+			case null:
+				return "nil";
+			case double:
+			{
+				var text = obj.ToString();
+				if (text.EndsWith(".0"))
+				{
+					text = text[..^2];
+				}
+				return text;
+			}
+			default:
+				return obj.ToString();
+		}
+	}
+
+	private object? Evaluate(Expr expr)
+	{
+		return expr.Accept(this);
+	}
+
+	public object? VisitBinaryExpr(Expr.Binary expr)
+	{
+		var left = Evaluate(expr.Left);
+		var right = Evaluate(expr.Right);
+
+		return expr.Op.Type switch
+		{
+			TokenType.Greater => CheckNumberOperands(expr.Op, left, right, out var rightValue) > rightValue,
+			TokenType.GreaterEqual => CheckNumberOperands(expr.Op, left, right, out var rightValue) >= rightValue,
+			TokenType.Less => CheckNumberOperands(expr.Op, left, right, out var rightValue) < rightValue,
+			TokenType.LessEqual => CheckNumberOperands(expr.Op, left, right, out var rightValue) <= rightValue,
+			TokenType.BangEqual => !Equals(left, right),
+			TokenType.EqualEqual => Equals(left, right),
+			TokenType.Minus => CheckNumberOperands(expr.Op, left, right, out var rightValue) - rightValue,
+			TokenType.Slash => CheckNumberOperands(expr.Op, left, right, out var rightValue) / rightValue,
+			TokenType.Star => CheckNumberOperands(expr.Op, left, right, out var rightValue) * rightValue,
+			TokenType.Plus => (left, right) switch
+			{
+				(double l, double r) => l + r,
+				(string ls, string rs) => ls + rs,
+				_ => throw new RuntimeError(expr.Op, "Operands must be two numbers or two strings.")
+			},
+			_ => throw new InvalidOperationException($"Unreachable binary operator: {expr.Op.Type}")
+		};
+	}
+
+	private static double CheckNumberOperand(Token op, object? operand)
+	{
+		return operand is not double d ? throw new RuntimeError(op, "Operand must be a number.") : d;
+	}
+
+	private static double CheckNumberOperands(Token op, object? left, object? right, out double rightValue)
+	{
+		if (left is not double l || right is not double r) throw new RuntimeError(op, "Operands must be two numbers.");
+		rightValue = r;
+		return l;
+	}
+}
