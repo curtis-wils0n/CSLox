@@ -8,7 +8,20 @@ public class Parser(List<Token> tokens)
 
 	private Expr Expression()
 	{
-		return Equality();
+		return Assignment();
+	}
+
+	private Stmt? Declaration()
+	{
+		try
+		{
+			return Match(TokenType.Var) ? VarDeclaration() : Statement();
+		}
+		catch (ParseError)
+		{
+			Synchronize();
+			return null;
+		}
 	}
 
 	private Stmt Statement()
@@ -23,11 +36,44 @@ public class Parser(List<Token> tokens)
 		return new Stmt.Print(value);
 	}
 
+	private Stmt VarDeclaration()
+	{
+		var name = Consume(TokenType.Identifier, "Expect variable name.");
+		Expr? initializer = null;
+
+		if (Match(TokenType.Equal))
+		{
+			initializer = Expression();
+		}
+
+		Consume(TokenType.Semicolon, "Expect ';' after initializer.");
+		return new Stmt.Var(name, initializer);
+	}
+
 	private Stmt.Expression ExpressionStatement()
 	{
 		var expr = Expression();
 		Consume(TokenType.Semicolon, "Expect ';' after expression.");
 		return new Stmt.Expression(expr);
+	}
+
+	private Expr Assignment()
+	{
+		var expr = Equality();
+
+		if (!Match(TokenType.Equal)) return expr;
+		var equals = Previous();
+		var value = Assignment();
+
+		if (expr is Expr.Variable variable)
+		{
+			var name = variable.Name;
+			return new Expr.Assign(name, value);
+		}
+
+		Error(equals, "Invalid assignment target.");
+
+		return expr;
 	}
 
 	private Expr Equality()
@@ -99,12 +145,8 @@ public class Parser(List<Token> tokens)
 		if (Match(TokenType.False)) return new Expr.Literal(false);
 		if (Match(TokenType.True)) return new Expr.Literal(true);
 		if (Match(TokenType.Nil)) return new Expr.Literal(null);
-
-		if (Match(TokenType.Number, TokenType.String))
-		{
-			return new Expr.Literal(Previous().Literal);
-		}
-
+		if (Match(TokenType.Number, TokenType.String)) return new Expr.Literal(Previous().Literal);
+		if (Match(TokenType.Identifier)) return new Expr.Variable(Previous());
 		if (!Match(TokenType.LeftParen)) throw Error(Peek(), "Expected expression.");
 
 		var expr = Expression();
@@ -183,12 +225,12 @@ public class Parser(List<Token> tokens)
 		}
 	}
 
-	public List<Stmt> Parse()
+	public List<Stmt?> Parse()
 	{
-		var statements = new List<Stmt>();
+		var statements = new List<Stmt?>();
 		while (!IsAtEnd())
 		{
-			statements.Add(Statement());
+			statements.Add(Declaration());
 		}
 
 		return statements;

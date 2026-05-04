@@ -2,6 +2,8 @@ namespace CSLox;
 
 public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 {
+	private readonly Environment _environment = new();
+
 	public object? VisitLiteralExpr(Expr.Literal expr)
 	{
 		return expr.Value;
@@ -23,8 +25,12 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 			_ => throw new InvalidOperationException($"Unreachable unary operator: {expr.Operator.Type}")
 		};
 	}
+	public object? VisitVariableExpr(Expr.Variable expr)
+	{
+		return _environment.Get(expr.Name);
+	}
 
-	public void Interpret(List<Stmt> statements)
+	public void Interpret(List<Stmt?> statements)
 	{
 		try
 		{
@@ -74,9 +80,9 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 		return expr.Accept(this);
 	}
 
-	private void Execute(Stmt stmt)
+	private void Execute(Stmt? stmt)
 	{
-		stmt.Accept(this);
+		stmt?.Accept(this);
 	}
 
 	public void VisitExpressionStmt(Stmt.Expression stmt)
@@ -88,6 +94,20 @@ public class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor
 	{
 		var value = Evaluate(stmt.InnerExpression);
 		if (value != null) Console.WriteLine(Stringify(value));
+	}
+	
+	public void VisitVarStmt(Stmt.Var stmt)
+	{
+		var value = Evaluate(stmt.Initializer);
+
+		_environment.Define(stmt.Name.Lexeme, value);
+	}
+
+	public object? VisitAssignExpr(Expr.Assign expr)
+	{
+		var value = Evaluate(expr.Value);
+		_environment.Assign(expr.Name, value);
+		return value;
 	}
 
 	public object? VisitBinaryExpr(Expr.Binary expr)

@@ -1,11 +1,7 @@
 namespace CSLox;
 
-public class RuntimeError : Exception
+public class RuntimeError(Token token, string message) : Exception(message)
 {
-	public Token Token { get; }
+	public Token Token { get; } = token;
 
-	public RuntimeError(Token token, string message) : base(message)
-	{
-		Token = token;
-	}
 }

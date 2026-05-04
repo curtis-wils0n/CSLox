@@ -12,7 +12,7 @@ public abstract class Lox
 		{
 			case > 1:
 				Console.WriteLine("Usage: cslox [script]");
-				Environment.Exit(64);
+				System.Environment.Exit(64);
 				break;
 			case 1:
 				RunFile(args[0]);
@@ -28,8 +28,8 @@ public abstract class Lox
 		var text = File.ReadAllText(path);
 		Run(text);
 
-		if (_hadError) Environment.Exit(65);
-		if (_hadRuntimeError) Environment.Exit(70);
+		if (_hadError) System.Environment.Exit(65);
+		if (_hadRuntimeError) System.Environment.Exit(70);
 	}
 
 	private static void RunPrompt()
